@@ -182,3 +182,22 @@ variable "apply_only_at_cron_interval" {
   type        = bool
   default     = false
 }
+
+variable "association_targets" {
+  description = "Optional list of target filters for the SSM association. Each entry maps directly to a `targets` block on the aws_ssm_association resource: use key = \"tag:<TagKey>\" to target by EC2 tag (e.g. key = \"tag:Environment\", values = [\"production\"]), or omit to target all managed instances. Multiple values for one key are ORed; multiple entries are ANDed. Maximum 5 entries (AWS SSM limit). When not set, all managed instances are targeted."
+  type = list(object({
+    key    = string
+    values = list(string)
+  }))
+  default = null
+
+  validation {
+    condition     = var.association_targets == null || (length(var.association_targets) >= 1 && length(var.association_targets) <= 5)
+    error_message = "association_targets must contain between 1 and 5 entries (AWS SSM limit)."
+  }
+
+  validation {
+    condition     = var.association_targets == null || alltrue([for t in var.association_targets : length(t.values) >= 1])
+    error_message = "Each association_targets entry must have at least one value."
+  }
+}

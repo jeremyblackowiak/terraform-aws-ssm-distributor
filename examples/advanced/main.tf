@@ -40,6 +40,13 @@ module "crowdstrike_distributor" {
   linux_installer_params   = "--tags=Environment:Production,ManagedBy:Terraform"
   windows_installer_params = "/tags=Environment:Production,ManagedBy:Terraform"
 
+  # Optional: target only specific EC2 instances by tag.
+  # Multiple entries are ANDed; multiple values within one entry are ORed.
+  # association_targets = [
+  #   { key = "tag:Environment", values = ["production"] },
+  #   { key = "tag:Team",        values = ["security"] },
+  # ]
+
   # Comprehensive tagging
   tags = {
     Environment = "production"
