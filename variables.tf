@@ -184,7 +184,22 @@ variable "apply_only_at_cron_interval" {
 }
 
 variable "association_targets" {
-  description = "Optional list of target filters for the SSM association. Each entry maps directly to a `targets` block on the aws_ssm_association resource: use key = \"tag:<TagKey>\" to target by EC2 tag (e.g. key = \"tag:Environment\", values = [\"production\"]), or omit to target all managed instances. Multiple values for one key are ORed; multiple entries are ANDed. Maximum 5 entries (AWS SSM limit). When not set, all managed instances are targeted."
+  description = <<-EOT
+    Optional list of target filters for the SSM association. Each entry maps directly to a
+    `targets` block on the aws_ssm_association resource. When not set, all managed instances
+    are targeted.
+
+    Supported key formats:
+      - "InstanceIds"       — target specific instances; use values = ["*"] for all
+      - "tag:<TagKey>"      — target instances by EC2 tag (e.g. key = "tag:Environment", values = ["production"])
+      - "ResourceGroup"     — target all instances in a named AWS Resource Groups group (values = ["<group-name>"])
+
+    Important limits (AWS SSM):
+      - Automation documents (e.g. CrowdStrike-FalconSensorDeploy): maximum ONE tag key filter.
+        To AND multiple tags together, create an AWS Resource Group with the desired tag filters
+        and use key = "ResourceGroup" instead.
+      - Command documents: up to five tag key filters.
+  EOT
   type = list(object({
     key    = string
     values = list(string)
