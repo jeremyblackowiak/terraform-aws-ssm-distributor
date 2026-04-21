@@ -185,34 +185,25 @@ variable "apply_only_at_cron_interval" {
 
 variable "association_targets" {
   description = <<-EOT
-    Optional list of target filters for the SSM association. Each entry maps directly to a
-    `targets` block on the aws_ssm_association resource. When not set, all managed instances
-    are targeted.
+    Optional target for the SSM association. When not set, all managed instances are targeted.
 
-    Supported key formats:
-      - "InstanceIds"       — target specific instances; use values = ["*"] for all
-      - "tag:<TagKey>"      — target instances by EC2 tag (e.g. key = "tag:Environment", values = ["production"])
-      - "ResourceGroup"     — target all instances in a named AWS Resource Groups group (values = ["<group-name>"])
+    Specify exactly one of:
+      - key = "InstanceIds",       values = ["*"]             — all managed instances (default)
+      - key = "tag:<TagKey>",      values = ["<value>", ...]  — instances matching an EC2 tag
+      - key = "ResourceGroup",     values = ["<group-name>"]  — instances in an AWS Resource Group
 
-    Important limits (AWS SSM):
-      - Automation documents (e.g. CrowdStrike-FalconSensorDeploy): maximum ONE tag key filter.
-        To AND multiple tags together, create an AWS Resource Group with the desired tag filters
-        and use key = "ResourceGroup" instead.
-      - Command documents: up to five tag key filters.
+    Note: CrowdStrike-FalconSensorDeploy is an Automation document and supports only one tag key
+    as a target filter. To AND multiple tags together, create an AWS Resource Groups group with
+    the desired tag filters and use key = "ResourceGroup".
   EOT
-  type = list(object({
+  type = object({
     key    = string
     values = list(string)
-  }))
+  })
   default = null
 
   validation {
-    condition     = var.association_targets == null || (length(var.association_targets) >= 1 && length(var.association_targets) <= 5)
-    error_message = "association_targets must contain between 1 and 5 entries (AWS SSM limit)."
-  }
-
-  validation {
-    condition     = var.association_targets == null || alltrue([for t in var.association_targets : length(t.values) >= 1])
-    error_message = "Each association_targets entry must have at least one value."
+    condition     = var.association_targets == null || length(var.association_targets.values) >= 1
+    error_message = "association_targets.values must contain at least one entry."
   }
 }

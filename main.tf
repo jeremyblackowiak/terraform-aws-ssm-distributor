@@ -25,9 +25,10 @@ locals {
     }
   )
 
-  ssm_targets = var.association_targets != null ? var.association_targets : [
-    { key = "InstanceIds", values = ["*"] }
-  ]
+  ssm_targets = var.association_targets != null ? var.association_targets : {
+    key    = "InstanceIds"
+    values = ["*"]
+  }
 }
 
 # Get current AWS partition for IAM policy ARNs
@@ -193,12 +194,9 @@ resource "aws_ssm_association" "sensor_deploy" {
 
   schedule_expression = var.cron_schedule_expression
 
-  dynamic "targets" {
-    for_each = local.ssm_targets
-    content {
-      key    = targets.value.key
-      values = targets.value.values
-    }
+  targets {
+    key    = local.ssm_targets.key
+    values = local.ssm_targets.values
   }
 
   automation_target_parameter_name = "InstanceIds"
